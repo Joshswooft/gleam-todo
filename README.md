@@ -29,30 +29,37 @@ gleam shell # Run an Erlang shell
 
 Run some commands:
 
-```bash
+## Create a new todo
 
-# create a new todo
+```bash
 curl -X POST \
   http://localhost:8080/todos \
   -H 'Content-Type: application/json' \
   -d '{"message":"my new todo"}' 
+```
 
-# update a todo
-
+## update a todo
+```bash
 curl -X PUT \ 
   http://localhost:8080/todos/0 \
   -H 'Content-Type: application/json' \
   -d '{"message":"first"}'
+```
 
-# delete a todo
+## delete a todo
+```bash
 curl -X DELETE http://localhost:8080/todos/0
+```
 
-# get all todos
+
+## get all todos
+```bash
 curl http://localhost:8080/todos
+```
 
-# get a todo by its ID
+## get a todo by its ID
+```bash
 curl http://localhost:8080/todos/0
-
 ```
 
 

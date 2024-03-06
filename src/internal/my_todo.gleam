@@ -6,8 +6,6 @@ import gleam/io
 // note the directory and file have to be made beforehand
 const file_path = "./testdata/todo.txt"
 
-// TODO: how to make Todo type with key: int and value: string ?
-// Todo = Dict(Int, String) or maybe we can use List with key pairs?
 type Todo =
   List(String)
 

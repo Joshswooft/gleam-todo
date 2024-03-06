@@ -1,5 +1,4 @@
 import wisp.{type Request, type Response}
-import gleam/string_builder
 import gleam/http.{Delete, Get, Post, Put}
 import internal/my_todo
 import gleam/result
@@ -7,6 +6,7 @@ import gleam/io
 import gleam/int
 import gleam/string
 import gleam/list
+import gleam/dynamic.{type Dynamic}
 
 // handler runs some pattern matching which decides on what OP the todo service should make
 pub fn handler(req: Request) -> Response {
@@ -52,6 +52,7 @@ pub fn get(_request: Request, id: String) -> Response {
 
 // deletes a todo by its id (the index of the todo)
 // e.g. ["todo1", "todo2", "todo3"], id = 1 would delete "todo2"
+// returns the remaining list e.g. ["todo1", "todo3"]
 pub fn delete(_request: Request, id: String) -> Response {
   let assert Ok(id_num) = int.base_parse(id, 10)
 
@@ -67,9 +68,8 @@ pub fn delete(_request: Request, id: String) -> Response {
     Ok(updated_todos) -> {
       case my_todo.save(updated_todos) {
         Ok(_) -> {
-          // need changing
-          let body = string_builder.from_strings(updated_todos)
-          wisp.html_response(body, 200)
+          wisp.ok()
+          |> wisp.string_body(string.join(updated_todos, ","))
         }
         Error(_) -> wisp.internal_server_error()
       }
@@ -77,48 +77,66 @@ pub fn delete(_request: Request, id: String) -> Response {
   }
 }
 
-// TODO: handle updating a todo
-pub fn update(_request: Request, id: String) -> Response {
+fn decode_todo(json: Dynamic) -> Result(String, dynamic.DecodeErrors) {
+  let decoder = dynamic.field("message", dynamic.string)
+  decoder(json)
+}
+
+pub fn update(request: Request, id: String) -> Response {
   let assert Ok(id_num) = int.base_parse(id, 10)
 
-  // TODO: get value from request we wish to add
-  let value: String = "goose"
-  let all_todos = my_todo.get()
+  // This middleware parses a `Dynamic` value from the request body.
+  // It returns an error response if the body is not valid JSON, or
+  // if the content-type is not `application/json`, or if the body
+  // is too large.
+  use json <- wisp.require_json(request)
 
-  case list.at(all_todos, id_num) {
-    Error(_) -> wisp.bad_request()
-    Ok(_) -> {
-      let updated_todos = my_todo.update_by_index(all_todos, id_num, value)
+  case decode_todo(json) {
+    Error(_) -> wisp.unprocessable_entity()
+    Ok(value) -> {
+      let all_todos = my_todo.get()
 
-      case result.is_error(my_todo.save(updated_todos)) {
-        True -> wisp.internal_server_error()
-        False ->
-          wisp.ok()
-          |> wisp.string_body(string.join(updated_todos, ","))
+      io.debug(all_todos)
+
+      case list.at(all_todos, id_num) {
+        Error(_) -> wisp.bad_request()
+        Ok(_) -> {
+          let updated_todos = my_todo.update_by_index(all_todos, id_num, value)
+
+          case result.is_error(my_todo.save(updated_todos)) {
+            True -> wisp.internal_server_error()
+            False ->
+              wisp.ok()
+              |> wisp.string_body(string.join(updated_todos, ","))
+          }
+        }
       }
     }
   }
-
-  wisp.html_response(string_builder.from_string("foo"), 200)
 }
 
 // adds a new todo to the list
-pub fn add(_request: Request) -> Response {
+pub fn add(request: Request) -> Response {
   // get the value we wish to make from the request
 
-  // TODO: get value from request we wish to add
+  use json <- wisp.require_json(request)
 
-  let todos = my_todo.get()
+  case decode_todo(json) {
+    Error(_) -> wisp.unprocessable_entity()
+    Ok(value) -> {
+      let todos = my_todo.get()
 
-  case my_todo.add(todos, "new todo") {
-    Error(_) -> wisp.internal_server_error()
-    Ok(updated_todos) -> {
-      io.debug(updated_todos)
-      case result.is_error(my_todo.save(updated_todos)) {
-        True -> wisp.internal_server_error()
-        False ->
-          wisp.ok()
-          |> wisp.string_body(string.join(updated_todos, ","))
+      case my_todo.add(todos, value) {
+        Error(_) -> wisp.internal_server_error()
+        Ok(updated_todos) -> {
+          io.debug(updated_todos)
+          case result.is_error(my_todo.save(updated_todos)) {
+            True -> wisp.internal_server_error()
+            False ->
+              wisp.ok()
+              |> wisp.string_body(string.join(updated_todos, ","))
+          }
+        }
       }
     }
   }

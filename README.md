@@ -23,3 +23,33 @@ gleam run   # Run the project
 gleam test  # Run the tests
 gleam shell # Run an Erlang shell
 ```
+
+Run some commands:
+
+```bash
+
+# create a new todo
+curl -X POST \
+  http://localhost:8080/todos \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"my new todo"}' 
+
+# update a todo
+
+curl -X PUT \ 
+  http://localhost:8080/todos/0 \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"first"}'
+
+# delete a todo
+curl -X DELETE http://localhost:8080/todos/0
+
+# get all todos
+curl http://localhost:8080/todos
+
+# get a todo by its ID
+curl http://localhost:8080/todos/0
+
+```
+
+

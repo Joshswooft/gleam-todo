@@ -7,7 +7,7 @@ import app/todo_service.{handler, id_handler}
 /// 
 pub fn handle_request(req: Request) -> Response {
   // Apply the middleware stack for this request/response.
-  use _req <- middleware(req)
+  use req <- middleware(req)
 
   // Wisp doesn't have a special router abstraction, instead we recommend using
   // regular old pattern matching. This is faster than a router, is type safe,

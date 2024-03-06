@@ -1,5 +1,8 @@
 # todo_app
 
+Day 1 of using gleam.
+A simple TODO HTTP API application.
+
 [![Package Version](https://img.shields.io/hexpm/v/todo_app)](https://hex.pm/packages/todo_app)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/todo_app/)
 

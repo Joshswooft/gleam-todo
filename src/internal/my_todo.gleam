@@ -1,4 +1,10 @@
 import gleam/list
+import simplifile
+import gleam/string_builder
+import gleam/string
+
+// note the directory and file have to be made beforehand
+const file_path = "./testdata/todo.txt"
 
 // TODO: how to make Todo type with key: int and value: string ?
 // Todo = Dict(Int, String) or maybe we can use List with key pairs?
@@ -15,6 +21,15 @@ pub fn add(todos: Todo, value: String) -> Result(Todo, AddTodoError) {
     _, "" -> Error(NoTodoGiven)
     _, _ -> Ok(list.append(todos, [value]))
   }
+}
+
+// FIXME: seems to remove the commas so subsequent gets puts it all in one array
+// saves the todos to a file
+pub fn save(todos: Todo) {
+  todos
+  |> string_builder.from_strings
+  |> string_builder.to_string
+  |> simplifile.write(to: file_path)
 }
 
 pub type RemoveTodoError {
@@ -56,4 +71,10 @@ pub fn remove(todos: Todo, index: Int) -> Result(Todo, RemoveTodoError) {
     _, idx if idx > len -> Error(TodoDoesntExist)
     _, _ -> Ok(remove_from_list_by_index(todos, index))
   }
+}
+
+// reads todos from the file
+pub fn get() -> Todo {
+  let assert Ok(contents) = simplifile.read(from: file_path)
+  string.split(contents, ",")
 }
